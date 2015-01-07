@@ -137,6 +137,7 @@ public class WiFiDropActivity extends Activity implements
 			Log.d(TAG, uri.toString());
 			Log.d(TAG, type);
 			Log.d(TAG, getMediaInfo(uri, MediaStore.Images.ImageColumns.DATA));
+            Log.d(TAG, getMediaInfo(uri, MediaStore.Images.ImageColumns.SIZE) + "bytes");
 
 			servicesList = new WiFiDropDnsServicesList();
 			getFragmentManager().beginTransaction()
@@ -432,11 +433,13 @@ public class WiFiDropActivity extends Activity implements
 
 	public static boolean copyFile(InputStream inputStream, OutputStream out) {
 		byte buf[] = new byte[1024];
+        int count = 0;
 		int len;
 		try {
 			while ((len = inputStream.read(buf)) != -1) {
 				out.write(buf, 0, len);
-                Log.d(TAG, len + " bytes written");
+                count += len;
+                Log.d(TAG, count + " bytes written");
 			}
 			out.close();
 			inputStream.close();

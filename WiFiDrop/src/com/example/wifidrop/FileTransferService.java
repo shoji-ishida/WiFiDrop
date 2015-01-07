@@ -10,6 +10,7 @@ import android.app.TaskStackBuilder;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Looper;
 import android.os.Handler;
@@ -124,7 +125,7 @@ public class FileTransferService extends IntentService {
                 }
             });
             thread.start();
-            
+
 //            try
 //
 //            {
