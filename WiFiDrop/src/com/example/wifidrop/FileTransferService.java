@@ -124,6 +124,7 @@ public class FileTransferService extends IntentService {
                 }
             });
             thread.start();
+            thread.yield();
 //            try
 //
 //            {
