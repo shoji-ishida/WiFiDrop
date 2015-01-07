@@ -65,12 +65,12 @@ public class FileTransferService extends IntentService {
             final String host = intent.getExtras().getString(EXTRAS_GROUP_OWNER_ADDRESS);
             final Socket socket = new Socket();
             final int port = intent.getExtras().getInt(EXTRAS_GROUP_OWNER_PORT);
-            progress = new ProgressDialog(this);
-            progress.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
-            progress.setTitle(WiFiDropActivity.TAG);
-            progress.setMessage("送信中");
-            progress.setCancelable(false);
-            progress.show();
+            //progress = new ProgressDialog(this);
+            //progress.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
+            //progress.setTitle(WiFiDropActivity.TAG);
+            //progress.setMessage("送信中");
+            //progress.setCancelable(false);
+            //progress.show();
             //Toast.makeText(this, "送信中", Toast.LENGTH_LONG).show();
             Thread thread = new Thread(new Runnable() {
                 @Override
@@ -93,7 +93,7 @@ public class FileTransferService extends IntentService {
                         }
                         WiFiDropActivity.copyFile(is, stream);
                         stream.flush();
-                        progress.dismiss();
+                        //progress.dismiss();
                         //Toast.makeText(context, "送信完了", Toast.LENGTH_LONG).show();
                         Log.d(WiFiDropActivity.TAG, "Client: Data written");
                     }
@@ -124,7 +124,7 @@ public class FileTransferService extends IntentService {
                 }
             });
             thread.start();
-            thread.yield();
+            
 //            try
 //
 //            {
