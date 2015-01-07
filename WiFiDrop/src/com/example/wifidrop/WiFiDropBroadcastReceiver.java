@@ -101,13 +101,21 @@ public class WiFiDropBroadcastReceiver extends BroadcastReceiver implements Peer
         	String stateMsg = (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) ? "Enabled" : "Disabled";
         	Log.d(TAG, "P2P state changed - " + stateMsg);
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-
-            // request available peers from the wifi p2p manager. This is an
-            // asynchronous call and the calling activity is notified with a
-            // callback on PeerListListener.onPeersAvailable()
-            //if (manager != null) {
-            //    manager.requestPeers(channel, this);
-            //}
+            WifiP2pDeviceList deviceList = (WifiP2pDeviceList) intent
+                    .getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
+            Collection<WifiP2pDevice> devices = deviceList.getDeviceList();
+            for (WifiP2pDevice device: devices) {
+                Log.d(TAG, "P2P Device: " + device.deviceName + " " + WiFiDropDnsServicesList.getDeviceStatus(device.status));
+            }
+        } else if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
+            int state = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
+            if (state == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
+                Log.d(TAG, "P2P discovery started");
+            } else if (state == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
+                Log.d(TAG, "P2P discovery stopped");
+            } else {
+                Log.d(TAG, "P2P discovery unknown state");
+            }
         }
     }
 

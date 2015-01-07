@@ -71,6 +71,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
 		userName = mCursor.getString(nameIndex);
 		mCursor.close();
 
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
 		intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
 		intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
 		intentFilter
@@ -300,7 +301,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
 					dirs.mkdirs();
 				f.createNewFile();
 
-				Log.d(TAG, "server: copying files " + f.toString());
+				Log.d(TAG, "server: writing files " + f.toString());
 				InputStream inputstream = client.getInputStream();
                 OutputStream outputstream = new FileOutputStream(f);
 				WiFiDropActivity.copyFile(inputstream, outputstream);
@@ -334,7 +335,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
 		@Override
 		protected void onPostExecute(String result) {
 			if (result != null) {
-				Log.d(TAG, "File copied - " + result);
+				Log.d(TAG, "File written - " + result);
 				Intent intent = new Intent();
 				intent.setAction(android.content.Intent.ACTION_VIEW);
 				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

@@ -91,6 +91,7 @@ public class WiFiDropActivity extends Activity implements
 		// actionBar.setCustomView(statusTxtView);
 		// actionBar.setDisplayShowCustomEnabled(true);
 
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
 		intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
 		intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
 		intentFilter
@@ -435,7 +436,7 @@ public class WiFiDropActivity extends Activity implements
 		try {
 			while ((len = inputStream.read(buf)) != -1) {
 				out.write(buf, 0, len);
-
+                Log.d(TAG, len + " bytes written");
 			}
 			out.close();
 			inputStream.close();
