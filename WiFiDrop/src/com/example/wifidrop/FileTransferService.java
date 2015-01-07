@@ -3,11 +3,20 @@
 package com.example.wifidrop;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.app.TaskStackBuilder;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Looper;
+import android.os.Handler;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,6 +36,8 @@ public class FileTransferService extends IntentService {
     public static final String EXTRAS_FILE_PATH = "file_url";
     public static final String EXTRAS_GROUP_OWNER_ADDRESS = "go_host";
     public static final String EXTRAS_GROUP_OWNER_PORT = "go_port";
+    private int mId;
+    private ProgressDialog progress;
 
     public FileTransferService(String name) {
         super(name);
@@ -36,6 +47,11 @@ public class FileTransferService extends IntentService {
         super("FileTransferService");
     }
 
+    @Override
+    public void onDestroy() {
+    	Log.d(WiFiDropActivity.TAG, "Service onDestroy");
+    }
+    
     /*
      * (non-Javadoc)
      * @see android.app.IntentService#onHandleIntent(android.content.Intent)
@@ -49,28 +65,49 @@ public class FileTransferService extends IntentService {
             String host = intent.getExtras().getString(EXTRAS_GROUP_OWNER_ADDRESS);
             Socket socket = new Socket();
             int port = intent.getExtras().getInt(EXTRAS_GROUP_OWNER_PORT);
+            progress = new ProgressDialog(this);
+            progress.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
+            progress.setTitle(WiFiDropActivity.TAG);
+            progress.setMessage("送信中");
+            progress.setCancelable(false);
+            progress.show();
+            //Toast.makeText(this, "送信中", Toast.LENGTH_LONG).show();
+            try
 
-            try {
-                Log.d(WiFiDropActivity.TAG, "Opening client socket - ");
-                socket.bind(null);
-                socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
+            {
+                    Log.d(WiFiDropActivity.TAG, "Opening client socket - ");
+                    socket.bind(null);
+                    socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
 
-                Log.d(WiFiDropActivity.TAG, "Client socket - " + socket.isConnected());
-                OutputStream stream = socket.getOutputStream();
-                ContentResolver cr = context.getContentResolver();
-                InputStream is = null;
-                try {
-                    is = cr.openInputStream(Uri.parse(fileUri));
-                } catch (FileNotFoundException e) {
-                    Log.d(WiFiDropActivity.TAG, e.toString());
+                    Log.d(WiFiDropActivity.TAG, "Client socket - " + socket.isConnected());
+                    OutputStream stream = socket.getOutputStream();
+                    ContentResolver cr = context.getContentResolver();
+                    InputStream is = null;
+                    try {
+                        is = cr.openInputStream(Uri.parse(fileUri));
+                    } catch (FileNotFoundException e) {
+                        Log.d(WiFiDropActivity.TAG, e.toString());
+                    }
+                    WiFiDropActivity.copyFile(is, stream);
+                    stream.flush();
+                    progress.dismiss();
+                    Toast.makeText(this, "送信完了", Toast.LENGTH_LONG).show();
+                    Log.d(WiFiDropActivity.TAG, "Client: Data written");
                 }
-                WiFiDropActivity.copyFile(is, stream);
-                Log.d(WiFiDropActivity.TAG, "Client: Data written");
-            } catch (IOException e) {
-                Log.e(WiFiDropActivity.TAG, e.getMessage());
-            } finally {
-                if (socket != null) {
-                    if (socket.isConnected()) {
+
+                catch(
+                IOException e
+                )
+
+                {
+                    Toast.makeText(this, "送信失敗", Toast.LENGTH_LONG).show();
+                    Log.e(WiFiDropActivity.TAG, e.getMessage());
+                }
+
+                finally
+
+                {
+                    if (socket != null) if (socket.isConnected()) {
                         try {
                             socket.close();
                         } catch (IOException e) {
@@ -78,9 +115,11 @@ public class FileTransferService extends IntentService {
                             e.printStackTrace();
                         }
                     }
-                }
-            }
 
-        }
+                }
+
+            }
     }
+
+
 }
