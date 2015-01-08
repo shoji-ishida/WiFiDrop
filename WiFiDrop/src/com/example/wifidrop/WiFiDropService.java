@@ -360,7 +360,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
             progress.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
             progress.setTitle(WiFiDropActivity.TAG);
             progress.setMessage("受信中");
-            progress.setCancelable(false);
+            //progress.setCancelable(false);
             progress.show();
         }
     }

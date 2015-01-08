@@ -184,7 +184,7 @@ public class FileTransferService extends IntentService {
             progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progress.setMessage("送信中:"+size+"bytes");
             progress.setMax(size);
-            progress.setCancelable(false);
+            //progress.setCancelable(false);
             progress.show();
         }
 
