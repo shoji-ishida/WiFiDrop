@@ -36,9 +36,9 @@ public class FileTransferService extends IntentService {
     private static final int SOCKET_TIMEOUT = 10000;
     public static final String ACTION_SEND_FILE = "com.example.wifidrop.SEND_FILE";
     public static final String EXTRAS_FILE_PATH = "file_url";
+    public static final String EXTRAS_FILE_SIZE = "file_size";
     public static final String EXTRAS_GROUP_OWNER_ADDRESS = "go_host";
     public static final String EXTRAS_GROUP_OWNER_PORT = "go_port";
-    private int mId;
 
     public FileTransferService(String name) {
         super(name);
@@ -62,85 +62,34 @@ public class FileTransferService extends IntentService {
         final Context context = getApplicationContext();
         if (intent.getAction().equals(ACTION_SEND_FILE)) {
             final String fileUri = intent.getExtras().getString(EXTRAS_FILE_PATH);
+            final int size = intent.getExtras().getInt(EXTRAS_FILE_SIZE);
             final String host = intent.getExtras().getString(EXTRAS_GROUP_OWNER_ADDRESS);
             final Socket socket = new Socket();
             final int port = intent.getExtras().getInt(EXTRAS_GROUP_OWNER_PORT);
 
-            AsyncTask<Object, Void, Void> task = new FileClientAsyncTask(this)
+            AsyncTask<Object, Integer, Boolean> task = new FileClientAsyncTask(this, size)
                     .execute(host, fileUri, Integer.valueOf(port));
-//            Thread thread = new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try
-//
-//                    {
-//                        Log.d(WiFiDropActivity.TAG, "Opening client socket - ");
-//                        socket.bind(null);
-//                        socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
-//
-//                        Log.d(WiFiDropActivity.TAG, "Client socket - " + socket.isConnected());
-//                        OutputStream stream = socket.getOutputStream();
-//                        ContentResolver cr = context.getContentResolver();
-//                        InputStream is = null;
-//                        try {
-//                            is = cr.openInputStream(Uri.parse(fileUri));
-//                        } catch (FileNotFoundException e) {
-//                            Log.d(WiFiDropActivity.TAG, e.toString());
-//                        }
-//                        WiFiDropActivity.copyFile(is, stream);
-//                        stream.flush();
-//                        //progress.dismiss();
-//                        //Toast.makeText(context, "送信完了", Toast.LENGTH_LONG).show();
-//                        Log.d(WiFiDropActivity.TAG, "Client: Data written");
-//                    }
-//
-//                    catch(
-//                            IOException e
-//                            )
-//
-//                    {
-//                        //Toast.makeText(context, "送信失敗", Toast.LENGTH_LONG).show();
-//                        e.printStackTrace();
-//                        Log.e(WiFiDropActivity.TAG, e.getMessage());
-//                    }
-//
-//                    finally
-//
-//                    {
-//                        if (socket != null) if (socket.isConnected()) {
-//                            try {
-//                                socket.close();
-//                            } catch (IOException e) {
-//                                // Give up
-//                                e.printStackTrace();
-//                            }
-//                        }
-//
-//                    }
-//
-//                }
-//            });
-//            thread.start();
-
-
 
         }
     }
 
     public static class FileClientAsyncTask extends
-            AsyncTask<Object, Void, Void> {
+            AsyncTask<Object, Integer, Boolean> {
         private Context context;
         private ProgressDialog progress;
+        private int size;
 
-        public FileClientAsyncTask(Context context) {
+        public FileClientAsyncTask(Context context, int size) {
             this.context = context;
+            this.size = size;
         }
 
         @Override
-        protected Void doInBackground(Object... params) {
+        protected Boolean doInBackground(Object... params) {
             String host = (String)params[0];
             String fileUri = (String)params[1];
             int port = ((Integer)params[2]).intValue();
+
 
             Socket socket = new Socket();
             try
@@ -159,10 +108,25 @@ public class FileTransferService extends IntentService {
                 } catch (FileNotFoundException e) {
                     Log.d(WiFiDropActivity.TAG, e.toString());
                 }
-                WiFiDropActivity.copyFile(is, stream);
+                //WiFiDropActivity.copyFile(is, stream);
+                byte buf[] = new byte[1024];
+                int count = 0;
+                int len;
+                try {
+                    while ((len = is.read(buf)) != -1) {
+                        stream.write(buf, 0, len);
+                        count += len;
+                        publishProgress(count);
+                        //Log.d(TAG, count + " bytes written");
+                    }
+                    stream.close();
+                    is.close();
+                } catch (IOException e) {
+                    Log.d(WiFiDropActivity.TAG, e.toString());
+                    return false;
+                }
+
                 stream.flush();
-                //progress.dismiss();
-                //Toast.makeText(context, "送信完了", Toast.LENGTH_LONG).show();
                 Log.d(WiFiDropActivity.TAG, "Client: Data written");
             }
 
@@ -171,9 +135,9 @@ public class FileTransferService extends IntentService {
                     )
 
             {
-                //Toast.makeText(context, "送信失敗", Toast.LENGTH_LONG).show();
                 e.printStackTrace();
                 Log.e(WiFiDropActivity.TAG, e.getMessage());
+                return false;
             }
 
             finally
@@ -189,7 +153,7 @@ public class FileTransferService extends IntentService {
                 }
 
             }
-            return null;
+            return true;
         }
 
         /* (non-Javadoc)
@@ -197,9 +161,13 @@ public class FileTransferService extends IntentService {
                 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
         */
         @Override
-        protected void onPostExecute(Void result) {
+        protected void onPostExecute(Boolean result) {
             progress.dismiss();
-
+            if (!result.booleanValue()) {
+                Toast.makeText(context, "送信失敗", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, "送信完了", Toast.LENGTH_LONG).show();
+            }
         }
 
         /*
@@ -213,10 +181,16 @@ public class FileTransferService extends IntentService {
             progress = new ProgressDialog(context);
             progress.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
             progress.setTitle(WiFiDropActivity.TAG);
-            progress.setMessage("送信中");
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progress.setMessage("送信中:"+size+"bytes");
+            progress.setMax(size);
             progress.setCancelable(false);
             progress.show();
         }
 
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            progress.setProgress(values[0]);
+        }
     }
 }

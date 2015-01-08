@@ -76,8 +76,8 @@ public class WiFiDropActivity extends Activity implements
 	private WifiP2pDnsSdServiceInfo service;
 	private Map<String, String> profiles = new HashMap<String, String>();
 	private Uri uri = null;
+    private int size;
 
-	private TextView statusTxtView;
     private ProgressDialog progress;
 
 	@Override
@@ -129,11 +129,13 @@ public class WiFiDropActivity extends Activity implements
 			// Log.d(TAG, clip.toString());
 			uri = clip.getItemAt(0).getUri();
 			String type = intent.getType();
-			
+			String sizeStr = getMediaInfo(uri, MediaStore.Images.ImageColumns.SIZE);
+            size = Integer.valueOf(sizeStr);
+
 			Log.d(TAG, uri.toString());
 			Log.d(TAG, type);
 			Log.d(TAG, getMediaInfo(uri, MediaStore.Images.ImageColumns.DATA));
-            Log.d(TAG, getMediaInfo(uri, MediaStore.Images.ImageColumns.SIZE) + "bytes");
+            Log.d(TAG, sizeStr + "bytes");
 
 			servicesList = new WiFiDropDnsServicesList();
 			getFragmentManager().beginTransaction()
@@ -422,6 +424,7 @@ public class WiFiDropActivity extends Activity implements
 		serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
 		serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH,
 				uri.toString());
+        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_SIZE, size);
 		serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
 				info.groupOwnerAddress.getHostAddress());
 		serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT,
@@ -429,6 +432,7 @@ public class WiFiDropActivity extends Activity implements
 		this.startService(serviceIntent);
 		finish();
 	}
+
 
 	public static boolean copyFile(InputStream inputStream, OutputStream out) {
 		byte buf[] = new byte[1024];
