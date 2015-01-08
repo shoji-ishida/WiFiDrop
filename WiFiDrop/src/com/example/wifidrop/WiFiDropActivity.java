@@ -85,11 +85,7 @@ public class WiFiDropActivity extends Activity implements
 		Log.d(TAG, "on create");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_wi_fi_drop);
-		// statusTxtView = (TextView) findViewById(R.id.status_text);
-		// statusTxtView = new TextView(this);
-		// ActionBar actionBar = getActionBar();
-		// actionBar.setCustomView(statusTxtView);
-		// actionBar.setDisplayShowCustomEnabled(true);
+
 
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
 		intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -125,7 +121,7 @@ public class WiFiDropActivity extends Activity implements
 			// make sure single receiver is registered at a time
 			if (receiver == null) {
 				Log.d(TAG, "Broadcast receiver registered");
-				receiver = new WiFiDropBroadcastReceiver(manager, channel, this);
+				receiver = new WiFiDropBroadcastReceiver(manager, channel, this, "(Act)");
 				registerReceiver(receiver, intentFilter);
 			}
 
@@ -236,7 +232,9 @@ public class WiFiDropActivity extends Activity implements
 								adapter.notifyDataSetChanged();
 								Log.d(TAG, "onBonjourServiceAvailable "
 										+ instanceName);
-							}
+							} else {
+                                Log.d(TAG, "?? no fragment to add device");
+                            }
 						}
 
 					}
@@ -250,6 +248,7 @@ public class WiFiDropActivity extends Activity implements
 					public void onDnsSdTxtRecordAvailable(
 							String fullDomainName, Map<String, String> record,
 							WifiP2pDevice device) {
+                        Log.d(TAG, "TxtRecord");
 						Log.d(TAG,
 								device.deviceName
 										+ " is "
@@ -412,7 +411,7 @@ public class WiFiDropActivity extends Activity implements
 
 			channel = manager.initialize(this, getMainLooper(), this);
 			unregisterReceiver(receiver);
-			receiver = new WiFiDropBroadcastReceiver(manager, channel, this);
+			receiver = new WiFiDropBroadcastReceiver(manager, channel, this, "(Act)");
 			registerReceiver(receiver, intentFilter);
 		}
 	}
@@ -439,7 +438,7 @@ public class WiFiDropActivity extends Activity implements
 			while ((len = inputStream.read(buf)) != -1) {
 				out.write(buf, 0, len);
                 count += len;
-                Log.d(TAG, count + " bytes written");
+                //Log.d(TAG, count + " bytes written");
 			}
 			out.close();
 			inputStream.close();
@@ -467,6 +466,7 @@ public class WiFiDropActivity extends Activity implements
 	private void postNotification() {
 		NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
 				this).setSmallIcon(R.drawable.ic_launcher)
+                .setOngoing(true)
 				.setContentTitle("WiFiDrop起動中")
 				.setContentText("停止は、設定で行ってください。");
 		// Creates an explicit intent for an Activity in your app

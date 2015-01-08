@@ -39,21 +39,23 @@ import android.util.Log;
  */
 public class WiFiDropBroadcastReceiver extends BroadcastReceiver implements PeerListListener {
 
-	private static final String TAG = WiFiDropActivity.TAG + "(receiver)";
+	private static final String TAG = WiFiDropActivity.TAG + "(rec)";
     private WifiP2pManager manager;
     private Channel channel;
     private Context context;
+    private static String SIDE = "";
 
     /**
      * @param manager WifiP2pManager system service
      * @param channel Wifi p2p channel
      */
     public WiFiDropBroadcastReceiver(WifiP2pManager manager, Channel channel,
-            Context context) {
+            Context context, String side) {
         super();
         this.manager = manager;
         this.channel = channel;
         this.context = context;
+        SIDE = side;
     }
 
     /*
@@ -64,7 +66,7 @@ public class WiFiDropBroadcastReceiver extends BroadcastReceiver implements Peer
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        Log.d(TAG, action);
+        Log.d(TAG+SIDE, action);
         if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
 
             if (manager == null) {
@@ -78,13 +80,13 @@ public class WiFiDropBroadcastReceiver extends BroadcastReceiver implements Peer
 
                 // we are connected with the other device, request connection
                 // info to find group owner IP
-                Log.d(TAG,
+                Log.d(TAG+SIDE,
                         "Connected to p2p network. Requesting network details");
                 manager.requestConnectionInfo(channel,
                         (ConnectionInfoListener) context);
             } else {
                 // It's a disconnect
-            	Log.d(TAG,
+            	Log.d(TAG+SIDE,
                         "Disconnected from p2p network.");
             	manager.requestConnectionInfo(channel,
                         (ConnectionInfoListener) context);
@@ -94,27 +96,27 @@ public class WiFiDropBroadcastReceiver extends BroadcastReceiver implements Peer
 
             WifiP2pDevice device = (WifiP2pDevice) intent
                     .getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
-            Log.d(TAG, "Device status = " + WiFiDropDnsServicesList.getDeviceStatus(device.status));
+            Log.d(TAG+SIDE, "Device status = " + WiFiDropDnsServicesList.getDeviceStatus(device.status));
 
         } else if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
         	int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
         	String stateMsg = (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) ? "Enabled" : "Disabled";
-        	Log.d(TAG, "P2P state changed - " + stateMsg);
+        	Log.d(TAG+SIDE, "P2P state changed - " + stateMsg);
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
             WifiP2pDeviceList deviceList = (WifiP2pDeviceList) intent
                     .getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
             Collection<WifiP2pDevice> devices = deviceList.getDeviceList();
             for (WifiP2pDevice device: devices) {
-                Log.d(TAG, "P2P Device: " + device.deviceName + " " + WiFiDropDnsServicesList.getDeviceStatus(device.status));
+                Log.d(TAG+SIDE, "P2P Device: " + device.deviceName + " " + WiFiDropDnsServicesList.getDeviceStatus(device.status));
             }
         } else if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
             int state = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
             if (state == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
-                Log.d(TAG, "P2P discovery started");
+                Log.d(TAG+SIDE, "P2P discovery started");
             } else if (state == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
-                Log.d(TAG, "P2P discovery stopped");
+                Log.d(TAG+SIDE, "P2P discovery stopped");
             } else {
-                Log.d(TAG, "P2P discovery unknown state");
+                Log.d(TAG+SIDE, "P2P discovery unknown state");
             }
         }
     }
@@ -126,7 +128,7 @@ public class WiFiDropBroadcastReceiver extends BroadcastReceiver implements Peer
 		
 		for (Iterator<WifiP2pDevice> i=devices.iterator(); i.hasNext();) {
 			WifiP2pDevice device = (WifiP2pDevice) i.next();
-			Log.d(TAG, device.toString());
+			Log.d(TAG+SIDE, device.toString());
 		}
 	}
 }
