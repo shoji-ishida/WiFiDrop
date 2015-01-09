@@ -1,5 +1,7 @@
 package com.example.wifidrop;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -304,10 +306,9 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
                 f.createNewFile();
 
                 Log.d(TAG, "server: writing files " + f.toString());
-                InputStream inputstream = client.getInputStream();
-                OutputStream outputstream = new FileOutputStream(f);
+                InputStream inputstream = new BufferedInputStream(client.getInputStream());
+                OutputStream outputstream = new BufferedOutputStream(new FileOutputStream(f));
                 WiFiDropActivity.copyFile(inputstream, outputstream);
-                outputstream.flush();
                 Log.d(WiFiDropActivity.TAG, "Server: File written");
                 toast(this.context, "受信完了");
                 return f.getAbsolutePath();

@@ -444,6 +444,7 @@ public class WiFiDropActivity extends Activity implements
                 count += len;
                 //Log.d(TAG, count + " bytes written");
 			}
+            out.flush();
 			out.close();
 			inputStream.close();
 		} catch (IOException e) {

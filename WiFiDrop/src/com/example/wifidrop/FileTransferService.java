@@ -20,6 +20,8 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,11 +102,11 @@ public class FileTransferService extends IntentService {
                 socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
 
                 Log.d(WiFiDropActivity.TAG, "Client socket - " + socket.isConnected());
-                OutputStream stream = socket.getOutputStream();
+                OutputStream stream = new BufferedOutputStream(socket.getOutputStream());
                 ContentResolver cr = context.getContentResolver();
                 InputStream is = null;
                 try {
-                    is = cr.openInputStream(Uri.parse(fileUri));
+                    is = new BufferedInputStream(cr.openInputStream(Uri.parse(fileUri)));
                 } catch (FileNotFoundException e) {
                     Log.d(WiFiDropActivity.TAG, e.toString());
                 }
@@ -119,14 +121,13 @@ public class FileTransferService extends IntentService {
                         publishProgress(count);
                         //Log.d(TAG, count + " bytes written");
                     }
+                    stream.flush();
                     stream.close();
                     is.close();
                 } catch (IOException e) {
                     Log.d(WiFiDropActivity.TAG, e.toString());
                     return false;
                 }
-
-                stream.flush();
                 Log.d(WiFiDropActivity.TAG, "Client: Data written");
             }
 
