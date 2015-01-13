@@ -172,7 +172,23 @@ public class WiFiDropActivity extends Activity implements
 	@Override
 	protected void onPause() {
 		// TODO Auto-generated method stub
+        if (serviceRequest != null) {
+            manager.removeServiceRequest(channel, serviceRequest,
+                    new ActionListener() {
+
+                        @Override
+                        public void onSuccess() {
+                            Log.d(TAG, "Removed Service request.");
+                        }
+
+                        @Override
+                        public void onFailure(int arg0) {
+                            Log.d(TAG, "Failed to remove Service request.");
+                        }
+                    });
+        }
 		if (receiver != null) {
+            appendStatus("unregister receiver");
 			unregisterReceiver(receiver);
 			receiver = null;
 		}
@@ -181,8 +197,10 @@ public class WiFiDropActivity extends Activity implements
 
 	@Override
 	protected void onRestart() {
-		Fragment frag = getFragmentManager().findFragmentByTag("services");
+        Log.d(TAG, "onRestart");
+		Fragment frag = getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
 		if (frag != null) {
+            Log.d(TAG, "removed Fragment");
 			getFragmentManager().beginTransaction().remove(frag).commit();
 		}
 		super.onRestart();

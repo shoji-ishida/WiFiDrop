@@ -97,6 +97,7 @@ public class FileTransferService extends IntentService {
             try
 
             {
+                Thread.sleep(1000);
                 Log.d(WiFiDropActivity.TAG, "Opening client socket - ");
                 socket.bind(null);
                 socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
@@ -129,21 +130,13 @@ public class FileTransferService extends IntentService {
                     return false;
                 }
                 Log.d(WiFiDropActivity.TAG, "Client: Data written");
-            }
-
-            catch(
-                    IOException e
-                    )
-
-            {
+            } catch(IOException e) {
                 e.printStackTrace();
                 Log.e(WiFiDropActivity.TAG, e.getMessage());
                 return false;
-            }
-
-            finally
-
-            {
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
                 if (socket != null) if (socket.isConnected()) {
                     try {
                         socket.close();

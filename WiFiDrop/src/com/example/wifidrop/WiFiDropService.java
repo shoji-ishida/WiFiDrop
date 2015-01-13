@@ -3,6 +3,7 @@ package com.example.wifidrop;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,10 +16,13 @@ import java.util.Map;
 import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -34,6 +38,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -291,6 +296,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
                 serverSocket = new ServerSocket(WiFiDropActivity.PORT);
                 Log.d(TAG, "Server: Socket opened");
                 Socket client = serverSocket.accept();
+                client.setSoTimeout(60000);
                 Log.d(TAG, "Server: connection done");
                 final File f = new File(
                         Environment
@@ -308,10 +314,17 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
                 Log.d(TAG, "server: writing files " + f.toString());
                 InputStream inputstream = new BufferedInputStream(client.getInputStream());
                 OutputStream outputstream = new BufferedOutputStream(new FileOutputStream(f));
-                WiFiDropActivity.copyFile(inputstream, outputstream);
-                Log.d(WiFiDropActivity.TAG, "Server: File written");
-                toast(this.context, "受信完了");
-                return f.getAbsolutePath();
+                if (WiFiDropActivity.copyFile(inputstream, outputstream)) {
+                    Log.d(WiFiDropActivity.TAG, "Server: File written");
+                    toast(this.context, "受信完了");
+                    registAndroidDB(context, f);
+                    return f.getAbsolutePath();
+                } else {
+                    toast(this.context, "受信失敗");
+                    f.delete();
+                    return null;
+                }
+
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
                 toast(this.context, "受信失敗");
@@ -337,7 +350,11 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
 		 */
         @Override
         protected void onPostExecute(String result) {
-            progress.dismiss();
+            if (progress.isShowing()) {
+                progress.dismiss();
+            } else {
+                Log.d(TAG, "prorgess diaglog is not showing why?");
+            }
             if (result != null) {
                 Log.d(TAG, "File written - " + result);
                 Intent intent = new Intent();
@@ -376,5 +393,36 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
         });
     }
 
+    private static void registAndroidDB(Context context, File  file) {
+        // アンドロイドのデータベースへ登録
+        // (登録しないとギャラリーなどにすぐに反映されないため)
+        ContentValues values = new ContentValues();
+        ContentResolver contentResolver = context.getContentResolver();
+        String path = file.getAbsolutePath();
+        int orientation = 0;
+        try {
+            ExifInterface exif = new ExifInterface(path);
+            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    orientation = 90;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    orientation = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    orientation = 270;
+                    break;
+                default:
+                    orientation = 0;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        values.put(MediaStore.Images.Media.ORIENTATION, orientation);
+        values.put("_data", path);
+        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+    }
 }
