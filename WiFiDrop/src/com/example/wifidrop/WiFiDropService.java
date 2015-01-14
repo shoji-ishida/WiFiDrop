@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -240,7 +241,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
                     }
                 });
             }
-            AsyncTask<Void, Void, String> task = new FileServerAsyncTask(this)
+            AsyncTask<Void, Integer, String> task = new FileServerAsyncTask(this)
                     .execute();
         }
     }
@@ -276,7 +277,7 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
      * the stream.
      */
     public static class FileServerAsyncTask extends
-            AsyncTask<Void, Void, String> {
+            AsyncTask<Void, Integer, String> {
 
         private Context context;
         private ProgressDialog progress;
@@ -312,18 +313,35 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
                 f.createNewFile();
 
                 Log.d(TAG, "server: writing files " + f.toString());
-                InputStream inputstream = new BufferedInputStream(client.getInputStream());
+                ObjectInputStream inputstream = new ObjectInputStream(client.getInputStream());
                 OutputStream outputstream = new BufferedOutputStream(new FileOutputStream(f));
-                if (WiFiDropActivity.copyFile(inputstream, outputstream)) {
-                    Log.d(WiFiDropActivity.TAG, "Server: File written");
-                    toast(this.context, "受信完了");
-                    registAndroidDB(context, f);
-                    return f.getAbsolutePath();
-                } else {
+                int size = inputstream.readInt();
+                Log.d(TAG, "size = " + size);
+
+                byte buf[] = new byte[1024];
+                int count = 0;
+                int len;
+                try {
+                    while ((len = inputstream.read(buf)) != -1) {
+                        outputstream.write(buf, 0, len);
+                        outputstream.flush();
+                        count += len;
+                        publishProgress((int)((float)count/(float)size * 100));
+                        //Log.d(TAG, count + " bytes written");
+                    }
+                    outputstream.close();
+                    inputstream.close();
+                } catch (IOException e) {
+                    Log.d(WiFiDropActivity.TAG, e.toString());
                     toast(this.context, "受信失敗");
                     f.delete();
                     return null;
                 }
+
+                Log.d(WiFiDropActivity.TAG, "Server: File written");
+                toast(this.context, "受信完了");
+                registAndroidDB(context, f);
+                return f.getAbsolutePath();
 
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
@@ -377,9 +395,15 @@ public class WiFiDropService extends Service implements ChannelListener, WiFiDro
             progress = new ProgressDialog(context);
             progress.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
             progress.setTitle(WiFiDropActivity.TAG);
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progress.setMessage("受信中");
             //progress.setCancelable(false);
             progress.show();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            progress.setProgress(values[0]);
         }
     }
 

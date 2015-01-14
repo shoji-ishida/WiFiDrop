@@ -446,30 +446,9 @@ public class WiFiDropActivity extends Activity implements
 		serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
 				info.groupOwnerAddress.getHostAddress());
 		serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT,
-				8988);
+				PORT);
 		this.startService(serviceIntent);
 		finish();
-	}
-
-
-	public static boolean copyFile(InputStream inputStream, OutputStream out) {
-		byte buf[] = new byte[1024];
-        int count = 0;
-		int len;
-		try {
-			while ((len = inputStream.read(buf)) != -1) {
-				out.write(buf, 0, len);
-                count += len;
-                //Log.d(TAG, count + " bytes written");
-			}
-            out.flush();
-			out.close();
-			inputStream.close();
-		} catch (IOException e) {
-			Log.d(TAG, e.toString());
-			return false;
-		}
-		return true;
 	}
 
 	public void onStartButtonClick(View view) {

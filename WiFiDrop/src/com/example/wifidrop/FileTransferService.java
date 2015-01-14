@@ -25,6 +25,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -111,19 +112,23 @@ public class FileTransferService extends IntentService {
                 } catch (FileNotFoundException e) {
                     Log.d(WiFiDropActivity.TAG, e.toString());
                 }
-                //WiFiDropActivity.copyFile(is, stream);
+
+                ObjectOutputStream oos = new ObjectOutputStream(stream);
+                oos.writeInt(size);
+                oos.flush();
+
                 byte buf[] = new byte[1024];
                 int count = 0;
                 int len;
                 try {
                     while ((len = is.read(buf)) != -1) {
-                        stream.write(buf, 0, len);
+                        oos.write(buf, 0, len);
+                        oos.flush();
                         count += len;
                         publishProgress(count);
                         //Log.d(TAG, count + " bytes written");
                     }
-                    stream.flush();
-                    stream.close();
+                    oos.close();
                     is.close();
                 } catch (IOException e) {
                     Log.d(WiFiDropActivity.TAG, e.toString());
